@@ -1,0 +1,309 @@
+######################################
+# quiet mode
+######################################
+V = 0
+ifeq ($(V), 0)
+  quiet = quiet_
+else
+  quiet =
+endif
+quiet_CC  = @echo "  CC $@"; $(CC)
+quiet_LD  = @echo "  LD $@"; $(CC)
+quiet_AS  = @echo "  AS $@"; $(AS)
+quiet_SZ  = @echo "  SZ $@"; $(SZ)
+quiet_HEX  = @echo "  HEX $@"; $(HEX)
+quiet_BIN  = @echo "  BIN $@"; $(BIN)
+
+######################################
+# helpers
+######################################
+rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
+
+######################################
+# target
+######################################
+TARGET = Project
+MODEL_DIR = ../../Model/STM32N6570-DK
+BINARY_DIR = Binary
+ifdef APP_GIT_SHA1_STRING
+C_DEFS += -DAPP_GIT_SHA1_STRING=\"$(APP_GIT_SHA1_STRING)\"
+endif
+ifdef APP_VERSION_STRING
+C_DEFS += -DAPP_VERSION_STRING=\"$(APP_VERSION_STRING)\"
+endif
+
+######################################
+# building variables
+######################################
+OPT = -Os -g3
+
+#######################################
+# paths
+#######################################
+# Build path
+BUILD_TOP = build
+BUILD_DIR = $(BUILD_TOP)/Application/STM32N6570-DK
+
+######################################
+# source
+######################################
+# C sources
+C_SOURCES += Src/main.c
+C_SOURCES += ../Common/Src/app_trackobject.c
+C_SOURCES += Src/syscalls.c
+C_SOURCES += Src/app_fuseprogramming.c
+C_SOURCES += $(wildcard ../../Middlewares/ai-postprocessing-wrapper/*.c)
+C_SOURCES += $(wildcard ../../Middlewares/stm32-vision-models-postprocessing/lib_vision_models_pp/Src/*.c)
+C_SOURCES += Src/stm32_lcd_ex.c
+C_SOURCES += Src/stm32n6xx_it.c
+C_SOURCES += ../../Middlewares/stedgeai-lib/Npu/Devices/STM32N6xx/mcu_cache.c
+C_SOURCES += ../../Middlewares/stedgeai-lib/Npu/Devices/STM32N6xx/npu_cache.c
+C_SOURCES += $(MODEL_DIR)/od.c
+C_SOURCES += $(MODEL_DIR)/stai_od.c
+C_SOURCES += $(MODEL_DIR)/reid.c
+C_SOURCES += $(MODEL_DIR)/stai_reid.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/CMSIS/Device/ST/STM32N6xx/Source/Templates/system_stm32n6xx_fsbl.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/STM32N6xx_HAL_Driver/Src/stm32n6xx_hal.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/STM32N6xx_HAL_Driver/Src/stm32n6xx_hal_cortex.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/STM32N6xx_HAL_Driver/Src/stm32n6xx_hal_dcmipp.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/STM32N6xx_HAL_Driver/Src/stm32n6xx_hal_dma2d.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/STM32N6xx_HAL_Driver/Src/stm32n6xx_hal_gpio.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/STM32N6xx_HAL_Driver/Src/stm32n6xx_hal_uart.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/STM32N6xx_HAL_Driver/Src/stm32n6xx_hal_i2c.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/STM32N6xx_HAL_Driver/Src/stm32n6xx_hal_i2c_ex.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/STM32N6xx_HAL_Driver/Src/stm32n6xx_hal_ltdc.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/STM32N6xx_HAL_Driver/Src/stm32n6xx_hal_ltdc_ex.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/STM32N6xx_HAL_Driver/Src/stm32n6xx_hal_rif.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/STM32N6xx_HAL_Driver/Src/stm32n6xx_hal_ramcfg.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/STM32N6xx_HAL_Driver/Src/stm32n6xx_hal_cacheaxi.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/STM32N6xx_HAL_Driver/Src/stm32n6xx_hal_pwr.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/STM32N6xx_HAL_Driver/Src/stm32n6xx_hal_pwr_ex.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/STM32N6xx_HAL_Driver/Src/stm32n6xx_hal_rcc.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/STM32N6xx_HAL_Driver/Src/stm32n6xx_hal_rcc_ex.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/STM32N6xx_HAL_Driver/Src/stm32n6xx_hal_xspi.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/STM32N6xx_HAL_Driver/Src/stm32n6xx_hal_bsec.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/BSP/STM32N6570-DK/stm32n6570_discovery.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/BSP/STM32N6570-DK/stm32n6570_discovery_bus.c
+C_SOURCES += ../../Middlewares/stm32-mw-camera/cmw_camera.c
+C_SOURCES += ../../Middlewares/stm32-mw-camera/cmw_utils.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/BSP/STM32N6570-DK/stm32n6570_discovery_lcd.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/BSP/STM32N6570-DK/stm32n6570_discovery_xspi.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/BSP/Components/aps256xx/aps256xx.c
+C_SOURCES += ../../STM32Cube_FW_N6/Drivers/BSP/Components/mx66uw1g45g/mx66uw1g45g.c
+C_SOURCES += ../../Middlewares/stm32-mw-camera/sensors/imx335/imx335.c
+C_SOURCES += ../../Middlewares/stm32-mw-camera/sensors/imx335/imx335_reg.c
+C_SOURCES += ../../Middlewares/stm32-mw-camera/sensors/vd6g/vd6g.c
+C_SOURCES += ../../Middlewares/stm32-mw-camera/sensors/vd55g1/vd55g1.c
+C_SOURCES += ../../Middlewares/stm32-mw-camera/sensors/vd1943/vd1943.c
+C_SOURCES += ../../Middlewares/stm32-mw-camera/sensors/ov5640/ov5640.c
+C_SOURCES += ../../Middlewares/stm32-mw-camera/sensors/ov5640/ov5640_reg.c
+C_SOURCES += ../../Middlewares/stm32-mw-camera/sensors/cmw_vd55g1.c
+C_SOURCES += ../../Middlewares/stm32-mw-camera/sensors/cmw_vd66gy.c
+C_SOURCES += ../../Middlewares/stm32-mw-camera/sensors/cmw_imx335.c
+C_SOURCES += ../../Middlewares/stm32-mw-camera/sensors/cmw_vd1943.c
+C_SOURCES += ../../Middlewares/stm32-mw-camera/sensors/cmw_ov5640.c
+C_SOURCES += Src/app_camerapipeline.c
+C_SOURCES += ../../Middlewares/stm32-mw-camera/ISP_Library/isp/Src/isp_algo.c
+C_SOURCES += ../../Middlewares/stm32-mw-camera/ISP_Library/isp/Src/isp_awb_algo.c
+C_SOURCES += ../../Middlewares/stm32-mw-camera/ISP_Library/isp/Src/isp_ae_algo.c
+C_SOURCES += ../../Middlewares/stm32-mw-camera/ISP_Library/isp/Src/isp_cmd_parser.c
+C_SOURCES += ../../Middlewares/stm32-mw-camera/ISP_Library/isp/Src/isp_core.c
+C_SOURCES += ../../Middlewares/stm32-mw-camera/ISP_Library/isp/Src/isp_services.c
+C_SOURCES += ../../Middlewares/stm32-mw-camera/ISP_Library/isp/Src/isp_tool_com.c
+C_SOURCES += ../../STM32Cube_FW_N6/Utilities/lcd/stm32_lcd.c
+C_SOURCES += ../../Middlewares/stedgeai-lib/Npu/ll_aton/ll_aton.c
+C_SOURCES += ../../Middlewares/stedgeai-lib/Npu/ll_aton/ll_aton_rt_main.c
+C_SOURCES += ../../Middlewares/stedgeai-lib/Npu/ll_aton/ll_aton_runtime.c
+C_SOURCES += ../../Middlewares/stedgeai-lib/Npu/ll_aton/ll_aton_cipher.c
+C_SOURCES += ../../Middlewares/stedgeai-lib/Npu/ll_aton/ll_aton_stai_internal.c
+C_SOURCES += ../../Middlewares/stedgeai-lib/Npu/ll_aton/ll_aton_util.c
+C_SOURCES += ../../Middlewares/stedgeai-lib/Npu/ll_aton/ll_sw_float.c
+C_SOURCES += ../../Middlewares/stedgeai-lib/Npu/ll_aton/ll_sw_integer.c
+C_SOURCES += ../../Middlewares/stedgeai-lib/Npu/ll_aton/ll_aton_lib.c
+C_SOURCES += ../../Middlewares/stedgeai-lib/Npu/ll_aton/ll_aton_lib_sw_operators.c
+C_SOURCES += ../../Middlewares/stedgeai-lib/Npu/ll_aton/ecloader.c
+C_SOURCES += ../../Middlewares/stm32-mw-ipl/Src/stm32ipl_resize.c
+C_SOURCES += ../../Middlewares/stm32-mw-ipl/Src/mve_resize.c
+C_SOURCES += ../../Middlewares/stm32-mw-ipl/Src/stm32ipl_rect.c
+C_SOURCES += ../../Middlewares/stm32-mw-ipl/Src/stm32ipl_mem_alloc.c
+C_SOURCES += ../../Middlewares/stm32-mw-ipl/Src/umm_malloc.c
+C_SOURCES += ../../Middlewares/stm32-mw-ipl/Src/stm32ipl.c
+
+# ASM sources
+ASM_SOURCES += ../../STM32Cube_FW_N6/Drivers/CMSIS/Device/ST/STM32N6xx/Source/Templates/gcc/startup_stm32n657xx_fsbl.s
+
+
+#######################################
+# binaries
+#######################################
+PREFIX = arm-none-eabi-
+# The gcc compiler bin path can be either defined in make command via GCC_PATH variable (> make GCC_PATH=xxx)
+# either it can be added to the PATH environment variable.
+ifdef GCC_PATH
+CC = $(GCC_PATH)/$(PREFIX)gcc
+AS = $(GCC_PATH)/$(PREFIX)gcc -x assembler-with-cpp
+CP = $(GCC_PATH)/$(PREFIX)objcopy
+SZ = $(GCC_PATH)/$(PREFIX)size
+READELF = $(GCC_PATH)/$(PREFIX)readelf
+else
+CC = $(PREFIX)gcc
+AS = $(PREFIX)gcc -x assembler-with-cpp
+CP = $(PREFIX)objcopy
+SZ = $(PREFIX)size
+CP = $(PREFIX)objcopy
+READELF = $(PREFIX)readelf
+endif
+HEX = $(CP) -O ihex
+BIN = $(CP) -O binary
+FLASHER = STM32_Programmer_CLI
+SIGNER = STM32_SigningTool_CLI
+OBJCOPY = arm-none-eabi-objcopy
+EL = "$(shell dirname "$(shell which $(FLASHER))")/ExternalLoader/MX66UW1G45G_STM32N6570-DK.stldr"
+
+#######################################
+# CFLAGS
+#######################################
+CPU = -mcpu=cortex-m55 -mcmse -mthumb
+FPU = -mfpu=fpv5-d16 -mfloat-abi=hard
+
+# mcu
+MCU = $(CPU) $(FPU)
+
+# C defines
+C_DEFS += -DSTM32N657xx
+C_DEFS += -DUSE_FULL_ASSERT
+C_DEFS += -DUSE_FULL_LL_DRIVER
+C_DEFS += -DVECT_TAB_SRAM
+C_DEFS += -DLL_ATON_DUMP_DEBUG_API
+C_DEFS += -DLL_ATON_PLATFORM=LL_ATON_PLAT_STM32N6
+C_DEFS += -DLL_ATON_OSAL=LL_ATON_OSAL_BARE_METAL
+C_DEFS += -DLL_ATON_RT_MODE=LL_ATON_RT_ASYNC
+C_DEFS += -DLL_ATON_SW_FALLBACK
+C_DEFS += -DLL_ATON_DBG_BUFFER_INFO_EXCLUDED=1
+C_DEFS += -DSTM32IPL
+
+# C includes
+# Patched files
+C_INCLUDES += -I../../Middlewares/stm32-mw-camera
+C_INCLUDES += -I../../Middlewares/stm32-mw-camera/sensors
+C_INCLUDES += -I../../Middlewares/stm32-mw-camera/sensors/imx335
+C_INCLUDES += -I../../Middlewares/stm32-mw-camera/sensors/vd55g1
+C_INCLUDES += -I../../Middlewares/stm32-mw-camera/sensors/vd6g
+C_INCLUDES += -I../../Middlewares/stm32-mw-camera/sensors/vd1943
+C_INCLUDES += -I../../Middlewares/stm32-mw-camera/sensors/ov5640
+
+C_INCLUDES += -IInc
+C_INCLUDES += -I$(MODEL_DIR)
+C_INCLUDES += -I../Common/Inc
+C_INCLUDES += -I../../Middlewares/ai-postprocessing-wrapper
+C_INCLUDES += -I../../Middlewares/stm32-vision-models-postprocessing/lib_vision_models_pp/Inc
+C_INCLUDES += -I../../Middlewares/stedgeai-lib/Npu/ll_aton
+C_INCLUDES += -I../../STM32Cube_FW_N6/Drivers/STM32N6xx_HAL_Driver/Inc
+C_INCLUDES += -I../../STM32Cube_FW_N6/Drivers/STM32N6xx_HAL_Driver/Inc/Legacy
+C_INCLUDES += -I../../STM32Cube_FW_N6/Drivers/CMSIS/Device/ST/STM32N6xx/Include
+C_INCLUDES += -I../../STM32Cube_FW_N6/Drivers/CMSIS/Include
+C_INCLUDES += -I../../STM32Cube_FW_N6/Drivers/CMSIS/DSP/Include
+C_INCLUDES += -I../../STM32Cube_FW_N6/Drivers/BSP/Components/Common
+C_INCLUDES += -I../../STM32Cube_FW_N6/Drivers/BSP/STM32N6570-DK
+C_INCLUDES += -I../../Middlewares/stm32-mw-camera/ISP_Library/isp/Inc
+C_INCLUDES += -I../../Middlewares/stedgeai-lib/Inc
+C_INCLUDES += -I../../Middlewares/stedgeai-lib/Npu/Devices/STM32N6xx
+C_INCLUDES += -I../../STM32Cube_FW_N6/Utilities/lcd
+C_INCLUDES += -I../../STM32Cube_FW_N6/Drivers/BSP/Components/aps256xx
+C_INCLUDES += -I../../Middlewares/stm32-mw-ipl/Inc
+
+ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fstack-usage -fdata-sections -ffunction-sections -fcyclomatic-complexity
+CFLAGS = $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) -Wall -fstack-usage -fdata-sections -ffunction-sections -fcyclomatic-complexity
+# Generate dependency information
+CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
+
+CFLAGS += -std=gnu11
+
+#######################################
+# LDFLAGS
+#######################################
+# link script
+LDSCRIPT = STM32CubeIDE/STM32N657xx.ld
+
+# libraries
+LIBS = -lc -lm -lnosys -l:NetworkRuntime1100_CM55_GCC.a
+LIBDIR = -L../../Middlewares/stedgeai-lib/Lib/GCC/ARMCortexM55
+LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections
+# Uncomment to enable %f formatted output
+LDFLAGS += -u _printf_float
+LDFLAGS += -Wl,--print-memory-usage
+# Avoid 'build/Project.elf has a LOAD segment with RWX permissions' warning
+LDFLAGS += -Wl,--no-warn-rwx-segments
+
+#######################################
+# base build
+#######################################
+.PHONY: all
+all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).bin
+
+.PHONY: sign
+sign: $(BUILD_DIR)/$(TARGET)_sign.hex
+
+#######################################
+# build the application
+#######################################
+OBJECTS = $(addprefix $(BUILD_DIR)/, $(C_SOURCES:.c=.o))
+OBJECTS += $(addprefix $(BUILD_DIR)/,$(ASM_SOURCES:.s=.o))
+OBJECTS += $(addprefix $(BUILD_DIR)/,$(ASM_SOURCES_S:.S=.o))
+
+
+$(BUILD_DIR)/%.o: %.c Makefile | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$($(quiet)CC) -c $(CFLAGS) -Wa,-a,-ad,-alms=$(BUILD_DIR)/$(notdir $(<:.c=.lst)) $< -o $@
+
+$(BUILD_DIR)/%.o: %.S Makefile | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$($(quiet)CC) -c $(CFLAGS) -Wa,-a,-ad,-alms=$(BUILD_DIR)/$(notdir $(<:.c=.lst)) $< -o $@
+
+$(BUILD_DIR)/%.o: %.s Makefile | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$($(quiet)AS) -c $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/$(TARGET).list: $(OBJECTS)
+	$(file > $@, $(OBJECTS))
+
+$(BUILD_DIR)/$(TARGET).elf: $(OBJECTS) Makefile $(BUILD_DIR)/$(TARGET).list
+	$($(quiet)LD) @$(BUILD_DIR)/$(TARGET).list $(LDFLAGS) -o $@
+	$($(quiet)SZ) $@
+
+$(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf | $(BUILD_DIR)
+	$(BIN) $< $@
+
+$(BUILD_DIR)/$(TARGET)_sign.bin: $(BUILD_DIR)/$(TARGET).bin
+	$(SIGNER) -s -bin $< -nk -t ssbl -hv 2.3 -o $(BUILD_DIR)/$(TARGET)_sign.bin
+
+$(BUILD_DIR)/$(TARGET)_sign.hex: $(BUILD_DIR)/$(TARGET)_sign.bin
+	$(CP) -I binary $< --change-addresses 0x70100000 -O ihex $@
+
+$(BUILD_DIR):
+	mkdir -p $@
+
+#######################################
+# clean up
+#######################################
+.PHONY: clean
+clean:
+	-rm -fR $(BUILD_TOP)
+
+#######################################
+# flash
+#######################################
+.PHONY: flash
+flash: $(BUILD_DIR)/$(TARGET)_sign.bin
+	$(FLASHER) -c port=SWD mode=HOTPLUG -el $(EL) -hardRst -w $< 0x70100000
+	@echo FLASH $<
+
+.PHONY: flash_weights
+flash_weights: $(MODEL_DIR)/od_data.hex $(MODEL_DIR)/reid_data.hex
+	$(FLASHER) -c port=SWD mode=HOTPLUG -el $(EL) -hardRst -w $(MODEL_DIR)/od_data.hex
+	$(FLASHER) -c port=SWD mode=HOTPLUG -el $(EL) -hardRst -w $(MODEL_DIR)/reid_data.hex
+
+#######################################
+# dependencies
+#######################################
+-include $(call rwildcard,$(BUILD_TOP),*.d)
